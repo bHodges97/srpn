@@ -10,8 +10,8 @@ import java.util.Stack;
  */
 public class SRPN {
 
-	Rand random = new Rand();
-	Stack<Integer> stack = new Stack<Integer>();
+	private Rand random = new Rand();
+	private Stack<Integer> stack = new Stack<Integer>();
 	/**
 	 * Main method
 	 * @param args No args used.
@@ -32,10 +32,12 @@ public class SRPN {
 	 */
 	public void run() {
 		Scanner scanner = new Scanner(System.in);
-		while (scanner.hasNextLine()) {
-			String nextLine = scanner.nextLine();//read a newline
-			nextLine = nextLine.split("#")[0];// remove comments
-			addToStack(nextLine);//put everything into the stack			
+		while (true) {
+			if(scanner.hasNextLine()){
+				String nextLine = scanner.nextLine();//read a newline
+				nextLine = nextLine.split("#")[0];// remove comments
+				addToStack(nextLine);//put everything into the stack
+			}
 		}
 	}
 	
@@ -48,7 +50,8 @@ public class SRPN {
 		for (int i = 0; i < sentence.length(); ++i) {
 			char c = sentence.charAt(i);
 			//build a numeric string
-			if(c == '-' && currentNum == "" && i < sentence.length() - 1 && Character.isDigit(sentence.charAt(i+1))){
+			if(c == '-' && currentNum == "" 
+				&& i < sentence.length() - 1 && Character.isDigit(sentence.charAt(i+1))){
 				currentNum = "-";
 			}else if (Character.isDigit(c)) {
 				currentNum += c;
@@ -60,13 +63,18 @@ public class SRPN {
 		}
 		addNum(currentNum);
 	}
+	
+	/**
+	 * Process the operators. Accepted are +,-,*,/,^,%,r,d,=
+	 * @param c The operator to process.
+	 */
 	private void proccessOperator(char c){
 		long result,operandA,operandB;
 		switch(c){
-		case 'r':
+		case 'r'://add to random number to stack
 			addNum("" + random.rand());
 			return;
-		case 'd':
+		case 'd'://print every element in stack
 			for (Integer number : stack) {
 					System.out.println(number);
 			}
@@ -78,7 +86,10 @@ public class SRPN {
 				System.out.println(stack.peek());//print element at top of stack
 			}
 			return;
+		case ' '://ignore spaces.
+			return;
 		}
+		//pop 2 from stack to do maths with
 		if (stack.size() < 2) {//underflow if not enough operands
 			System.out.println("Stack underflow.");
 			return;
@@ -124,12 +135,18 @@ public class SRPN {
 		addNum(""+result);		
 	}
 	
-	private void stackPush(long a,long b){
-		stack.push((int)a);//push back onto stack
-		stack.push((int)b);
-	}
 	/**
-	 * Push a numeric string on to the stack
+	 * Add parameters to stack.
+	 * @param args The numbers to add to stack.
+	 */
+	private void stackPush(long... args){
+		for(long num:args){//push each arg to stack.
+			stack.push((int)num);
+		}
+	}
+	
+	/**
+	 * Push a numeric string on to the stack Octals start with 0 or -0.
 	 * @param in The input string.
 	 */
 	private void addNum(String in) {
@@ -140,12 +157,12 @@ public class SRPN {
 			System.out.println("Stack overflow.");
 			return;
 		}
-		if(in.charAt(in.indexOf('-')+1) == '0'){
-			in = in.split("8|9")[0];
+		if(in.charAt(in.indexOf('-')+1) == '0'){//if octal
+			in = in.split("8|9")[0];//ignore everything after an 8 or 9
 		}		
 		if (in.length() > 11) {//in case the number is greater than the range of long
 			value = in.charAt(0) == '-' ? Integer.MIN_VALUE : Integer.MAX_VALUE;
-		} else {
+		} else {//turn octal/decimal string to decimal integer and do saturation.
 			value = in.charAt(in.indexOf('-')+1) == '0'?Long.parseLong(in,8):Long.valueOf(in);
 			value = value > Integer.MAX_VALUE ? Integer.MAX_VALUE : value;//reduce to int range
 			value = value < Integer.MIN_VALUE ? Integer.MIN_VALUE : value;
